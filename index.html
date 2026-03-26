@@ -108,12 +108,6 @@
   <!-- STEP 1 -->
   <div id="step1">
     <div class="panel">
-      <div class="panel-title">Anthropic API Key</div>
-      <label>Paste your key — stays in your browser only, never stored</label>
-      <input type="password" id="apiKey" placeholder="sk-ant-api03-..." oninput="checkReady()" />
-      <p class="note">Get your key at console.anthropic.com → API Keys. Each paper costs ~$0.10.</p>
-    </div>
-    <div class="panel">
       <div class="panel-title">Paper PDF</div>
       <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
         <input type="file" id="fileInput" accept=".pdf" style="display:none" onchange="handleFile(event)" />
@@ -220,8 +214,7 @@ function handleFile(e) {
 }
 
 function checkReady() {
-  const key = document.getElementById('apiKey').value.trim();
-  document.getElementById('generateBtn').disabled = !(paperBase64 && key.length > 20);
+  document.getElementById('generateBtn').disabled = !paperBase64;
 }
 
 async function callClaude(systemPrompt, useFile=true, userText='Extract the slide content from this paper.') {
@@ -233,7 +226,7 @@ async function callClaude(systemPrompt, useFile=true, userText='Extract the slid
 
   const resp = await fetch('/api/claude', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-api-key': key },
+    headers: { 'Content-Type': 'application/json', 'x-api-key': '' },
     body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 2000, system: systemPrompt, messages: [{ role: 'user', content }] })
   });
 
