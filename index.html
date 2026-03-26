@@ -218,7 +218,6 @@ function checkReady() {
 }
 
 async function callClaude(systemPrompt, useFile=true, userText='Extract the slide content from this paper.') {
-  const key = document.getElementById('apiKey').value.trim();
   const content = useFile ? [
     { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: paperBase64 } },
     { type: 'text', text: userText }
@@ -352,7 +351,6 @@ function resetApp(){
   document.getElementById('uploadLabel').textContent='Click to upload journal article PDF';
   document.getElementById('uploadSub').textContent='Supports any orthopaedic journal PDF';
   document.getElementById('uploadZone').classList.remove('has-file');
-  document.getElementById('apiKey').value='';
   document.getElementById('generateBtn').disabled=true;
   document.getElementById('errorBox').style.display='none';
   document.getElementById('s1').className='step active';
