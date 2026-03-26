@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Ortho Minute — Carousel Builder</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #f0f0f0; min-height: 100vh; }
+  .app { max-width: 860px; margin: 0 auto; padding: 2rem 1.5rem; }
+  .header { margin-bottom: 2rem; border-bottom: 1px solid #222; padding-bottom: 1.5rem; }
+  .header h1 { font-size: 22px; font-weight: 600; color: #fff; letter-spacing: -0.3px; }
+  .header h1 span { color: #1E90FF; }
+  .header p { font-size: 13px; color: #666; margin-top: 5px; }
+  .step-bar { display: flex; gap: 6px; margin-bottom: 2rem; }
+  .step { flex: 1; height: 3px; background: #222; border-radius: 2px; transition: background 0.4s; }
+  .step.active { background: #1E90FF; }
+  .step.done { background: #1E90FF55; }
+  .panel { background: #111; border: 1px solid #222; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
+  .panel-title { font-size: 11px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 1rem; }
+  label { display: block; font-size: 13px; color: #888; margin-bottom: 6px; }
+  input[type="password"] { width: 100%; padding: 10px 14px; font-size: 13px; border: 1px solid #2a2a2a; border-radius: 8px; background: #0d0d0d; color: #f0f0f0; font-family: 'SF Mono', monospace; outline: none; transition: border 0.2s; }
+  input:focus { border-color: #1E90FF55; }
+  .upload-zone { border: 1.5px dashed #2a2a2a; border-radius: 10px; padding: 2.5rem; text-align: center; cursor: pointer; transition: all 0.2s; }
+  .upload-zone:hover { border-color: #1E90FF; background: #1E90FF08; }
+  .upload-zone.has-file { border-color: #1E90FF; border-style: solid; background: #1E90FF0a; }
+  .upload-icon { font-size: 32px; margin-bottom: 10px; }
+  .upload-label { font-size: 14px; font-weight: 500; color: #ccc; }
+  .upload-sub { font-size: 12px; color: #555; margin-top: 4px; }
+  .btn-primary { background: #1E90FF; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; width: 100%; margin-top: 0.5rem; }
+  .btn-primary:hover { background: #1a7de0; }
+  .btn-primary:disabled { opacity: 0.3; cursor: not-allowed; }
+  .btn-secondary { background: transparent; color: #888; border: 1px solid #2a2a2a; padding: 10px 20px; border-radius: 8px; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+  .btn-secondary:hover { background: #1a1a1a; color: #ccc; }
+  .btn-copy { background: transparent; color: #1E90FF; border: 1px solid #1E90FF33; padding: 5px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; transition: all 0.2s; font-weight: 500; }
+  .btn-copy:hover { background: #1E90FF15; }
+  .progress-steps { display: flex; flex-direction: column; gap: 10px; }
+  .progress-item { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid #1a1a1a; }
+  .progress-item:last-child { border-bottom: none; }
+  .progress-dot { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; font-weight: 600; }
+  .dot-waiting { background: #1a1a1a; border: 1px solid #2a2a2a; color: #444; }
+  .dot-running { background: #1E90FF15; border: 1.5px solid #1E90FF; }
+  .dot-done { background: #1E90FF; color: white; }
+  .dot-error { background: #ff4444; color: white; }
+  .spinner { width: 12px; height: 12px; border: 2px solid #1E90FF33; border-top-color: #1E90FF; border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .prog-label { flex: 1; font-size: 13px; color: #aaa; }
+  .prog-status { font-size: 11px; color: #555; }
+  .prog-status.done { color: #1E90FF; }
+  .prog-status.error { color: #ff4444; }
+  .slide-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 1.5rem; }
+  .slide-mini { background: #0d0d0d; border: 1px solid #1E90FF33; border-radius: 8px; aspect-ratio: 1; padding: 10px; display: flex; flex-direction: column; justify-content: space-between; }
+  .slide-mini-label { font-size: 8px; color: #1E90FF; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .slide-mini-content { font-size: 7.5px; color: #ccc; line-height: 1.4; flex: 1; padding: 4px 0; overflow: hidden; }
+  .slide-mini-footer { font-size: 6px; color: #333; border-top: 1px solid #1a1a1a; padding-top: 3px; }
+  .content-section { margin-bottom: 1.5rem; }
+  .content-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .content-title { font-size: 12px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .field-box { background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 8px; padding: 12px; }
+  .field-label { font-size: 10px; color: #1E90FF; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+  .field-value { font-size: 13px; color: #e0e0e0; line-height: 1.5; }
+  .results-finding { background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+  .finding-title { font-size: 11px; color: #1E90FF; font-weight: 600; margin-bottom: 8px; }
+  .finding-bars { display: flex; gap: 16px; align-items: flex-end; }
+  .finding-bar-wrap { text-align: center; }
+  .finding-bar-label { font-size: 10px; color: #888; margin-bottom: 4px; }
+  .finding-bar-val { font-size: 18px; font-weight: 700; }
+  .finding-bar-val.orange { color: #FF6B1A; }
+  .finding-bar-val.blue { color: #1E90FF; }
+  .finding-pval { font-size: 11px; color: #555; margin-left: auto; align-self: center; }
+  .finding-text { font-size: 12px; color: #888; margin-top: 6px; line-height: 1.4; }
+  .caption-box { background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 8px; padding: 16px; font-size: 13px; color: #ccc; line-height: 1.7; white-space: pre-wrap; font-family: inherit; }
+  .python-section { margin-bottom: 12px; }
+  .python-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 8px; cursor: pointer; }
+  .python-header:hover { border-color: #333; }
+  .python-name { font-size: 13px; color: #ccc; font-weight: 500; }
+  .python-actions { display: flex; gap: 8px; align-items: center; }
+  .python-code { display: none; background: #060606; border: 1px solid #1a1a1a; border-top: none; border-radius: 0 0 8px 8px; padding: 14px; overflow-x: auto; }
+  .python-code.open { display: block; }
+  .python-code pre { font-size: 11px; color: #aaa; font-family: 'SF Mono', 'Fira Code', monospace; line-height: 1.6; white-space: pre; }
+  .abbrev-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .abbrev-item { background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 6px; padding: 8px 10px; }
+  .abbrev-key { font-size: 12px; color: #1E90FF; font-weight: 600; font-family: 'SF Mono', monospace; }
+  .abbrev-val { font-size: 11px; color: #666; margin-top: 2px; }
+  .actions { display: flex; gap: 10px; margin-top: 1.5rem; flex-wrap: wrap; }
+  .error-box { background: #1a0808; border: 1px solid #ff444433; border-radius: 8px; padding: 1rem; font-size: 13px; color: #ff8888; margin-top: 1rem; }
+  .note { font-size: 11px; color: #444; margin-top: 6px; }
+  .divider { height: 1px; background: #1a1a1a; margin: 1.5rem 0; }
+  .tag { display: inline-block; font-size: 10px; padding: 3px 10px; border-radius: 20px; font-weight: 600; }
+  .tag-green { background: #0a2010; color: #4CAF50; border: 1px solid #4CAF5033; }
+  .copy-feedback { font-size: 11px; color: #4CAF50; display: none; }
+  .copy-feedback.show { display: inline; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>The Ortho Minute <span>—</span> Carousel Builder</h1>
+    <p>Upload a paper PDF. Get 7 slides, caption, and ready-to-run Python scripts.</p>
+  </div>
+  <div class="step-bar" id="stepBar">
+    <div class="step active" id="s1"></div>
+    <div class="step" id="s2"></div>
+    <div class="step" id="s3"></div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div id="step1">
+    <div class="panel">
+      <div class="panel-title">Anthropic API Key</div>
+      <label>Paste your key — stays in your browser only, never stored</label>
+      <input type="password" id="apiKey" placeholder="sk-ant-api03-..." oninput="checkReady()" />
+      <p class="note">Get your key at console.anthropic.com → API Keys. Each paper costs ~$0.10.</p>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Paper PDF</div>
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+        <input type="file" id="fileInput" accept=".pdf" style="display:none" onchange="handleFile(event)" />
+        <div class="upload-icon">📄</div>
+        <div class="upload-label" id="uploadLabel">Click to upload journal article PDF</div>
+        <div class="upload-sub" id="uploadSub">Supports any orthopaedic journal PDF</div>
+      </div>
+    </div>
+    <button class="btn-primary" id="generateBtn" onclick="startGeneration()" disabled>Generate All Slides</button>
+    <div id="errorBox" class="error-box" style="display:none;"></div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div id="step2" style="display:none;">
+    <div class="panel">
+      <div class="panel-title">Generating Your Carousel</div>
+      <div class="progress-steps" id="progressSteps"></div>
+    </div>
+    <div id="errorBox2" class="error-box" style="display:none;"></div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div id="step3" style="display:none;">
+    <div class="panel">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+        <div class="panel-title" style="margin:0;">Slides</div>
+        <span class="tag tag-green">Complete</span>
+      </div>
+      <div class="slide-grid" id="slideGrid"></div>
+      <div class="divider"></div>
+      <div class="content-section" id="titleSection"></div>
+      <div class="content-section" id="backgroundSection"></div>
+      <div class="content-section" id="methodsSection"></div>
+      <div class="content-section" id="resultsSection"></div>
+      <div class="content-section" id="takeawaySection"></div>
+    </div>
+    <div class="panel" id="captionPanel">
+      <div class="content-header">
+        <div class="content-title">Instagram Caption</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="copy-feedback" id="captionFeedback">Copied!</span>
+          <button class="btn-copy" onclick="copyCaption()">Copy</button>
+        </div>
+      </div>
+      <div class="caption-box" id="captionText"></div>
+    </div>
+    <div class="panel">
+      <div class="content-header">
+        <div class="content-title">Python Scripts</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="copy-feedback" id="allFeedback">Copied!</span>
+          <button class="btn-copy" onclick="copyAll()">Copy all scripts</button>
+        </div>
+      </div>
+      <p style="font-size:12px; color:#555; margin-bottom:1rem;">Run each script in terminal to generate 1080x1080 PNG files. Requires: <code style="font-size:11px; color:#888;">pip install matplotlib</code></p>
+      <div id="pythonScripts"></div>
+      <div class="divider"></div>
+      <div class="content-title" style="margin-bottom:0.75rem;">Abbreviations</div>
+      <div class="abbrev-grid" id="abbrevGrid"></div>
+    </div>
+    <div class="actions">
+      <button class="btn-secondary" onclick="resetApp()">Start New Paper</button>
+      <button class="btn-primary" style="width:auto; flex:1;" onclick="copyAll()">Copy All Python Scripts</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let paperBase64 = '';
+let generatedData = {};
+let allScripts = [];
+
+const STEPS_CONFIG = [
+  { id: 'title', label: 'Title slide' },
+  { id: 'background', label: 'Background slide' },
+  { id: 'methods', label: 'Methods slide' },
+  { id: 'results', label: 'Results slides (up to 3)' },
+  { id: 'takeaway', label: 'Takeaway slide' },
+  { id: 'caption', label: 'Instagram caption' },
+  { id: 'abbrev', label: 'Abbreviations' },
+];
+
+const PROMPTS = {
+  title: `You are a slide content generator for The Ortho Minute, an orthopaedic surgery education Instagram platform. Read the attached paper and extract EXACTLY these fields for the Title Slide. Return ONLY valid JSON with no markdown, no backticks, no explanation: {"MAIN_TITLE":"punchy version of paper title, max 10 words, no em dashes","SUBTITLE":"study design phrase or secondary clause from title, max 12 words","JOURNAL":"full journal name","YEAR":"publication year as string"}. Critical rules: No em dashes ever. MAIN_TITLE max 10 words. Be punchy and clinical.`,
+  background: `You are a slide content generator for The Ortho Minute, an orthopaedic surgery education Instagram platform. Read the attached paper and extract EXACTLY these fields for the Background Slide. Return ONLY valid JSON with no markdown, no backticks, no explanation: {"BULLET_1":"most important background stat or fact that motivates this study, 1 sentence, max 10 words, no em dashes","BULLET_2":"the clinical problem or gap this study addresses, max 8 words, no em dashes","JOURNAL":"full journal name","YEAR":"publication year as string"}. Critical rules: No em dashes ever. Each bullet is punchy and standalone.`,
+  methods: `You are a slide content generator for The Ortho Minute, an orthopaedic surgery education Instagram platform. Read the attached paper and extract EXACTLY these fields for the Methods Slide. Return ONLY valid JSON with no markdown, no backticks, no explanation: {"DESIGN":"study design","N":"sample size with unit","POPULATION":"patient population in plain language, max 8 words","OUTCOME":"primary outcome measure, max 10 words","JOURNAL":"full journal name","YEAR":"publication year as string"}.`,
+  results: `You are a slide content generator for The Ortho Minute, an orthopaedic surgery education Instagram platform. Read the attached paper and identify exactly 3 key findings that can each be shown as a simple two-group bar chart. Return ONLY valid JSON with no markdown, no backticks, no explanation: {"JOURNAL":"full journal name","YEAR":"publication year as string","findings":[{"FINDING":"one sentence summary, max 12 words, no em dashes","BAR_LABEL_LEFT":"left bar group name, 1-3 words","BAR_LABEL_RIGHT":"right bar group name, 1-3 words","VALUE_LEFT":37.6,"VALUE_RIGHT":27.0,"Y_LABEL":"y axis label with units","P_VALUE":"p = 0.047"},{"FINDING":"second finding","BAR_LABEL_LEFT":"group 1","BAR_LABEL_RIGHT":"group 2","VALUE_LEFT":0,"VALUE_RIGHT":0,"Y_LABEL":"label","P_VALUE":"p = 0.02"},{"FINDING":"third finding","BAR_LABEL_LEFT":"group 1","BAR_LABEL_RIGHT":"group 2","VALUE_LEFT":0,"VALUE_RIGHT":0,"Y_LABEL":"label","P_VALUE":"p < 0.001"}]}. Critical rules: VALUE_LEFT and VALUE_RIGHT must be numbers only. Orange bar = first/control group. Blue bar = second/intervention group. Always find exactly 3 chartable numeric comparisons. No em dashes.`,
+  takeaway: `You are a slide content generator for The Ortho Minute, an orthopaedic surgery education Instagram platform. Read the attached paper and extract EXACTLY these fields for the Takeaway Slide. Return ONLY valid JSON with no markdown, no backticks, no explanation: {"LINE_1":"clinical setup from authors conclusion, 1 sentence, max 12 words, no em dashes","LINE_2":"punchy clinical action or key finding, max 8 words, no em dashes","JOURNAL":"full journal name","YEAR":"publication year as string"}. LINE_1 is white text setup. LINE_2 is blue text punchline. No em dashes.`,
+  caption: `You are a content generator for The Ortho Minute Instagram account. Read the attached paper and write the Instagram caption in EXACTLY this format. Return ONLY the caption text, nothing else: [Full paper title exactly as published]\n\nLimitations:\n- [Most clinically relevant limitation stated by the authors, 1 sentence, no em dashes]\n- [Second most clinically relevant limitation, 1 sentence, no em dashes]\n- [Third most clinically relevant limitation, 1 sentence, no em dashes]`
+};
+
+function handleFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    paperBase64 = ev.target.result.split(',')[1];
+    document.getElementById('uploadLabel').textContent = file.name;
+    document.getElementById('uploadSub').textContent = (file.size/1024).toFixed(0) + ' KB';
+    document.getElementById('uploadZone').classList.add('has-file');
+    checkReady();
+  };
+  reader.readAsDataURL(file);
+}
+
+function checkReady() {
+  const key = document.getElementById('apiKey').value.trim();
+  document.getElementById('generateBtn').disabled = !(paperBase64 && key.length > 20);
+}
+
+async function callClaude(systemPrompt, useFile=true, userText='Extract the slide content from this paper.') {
+  const key = document.getElementById('apiKey').value.trim();
+  const content = useFile ? [
+    { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: paperBase64 } },
+    { type: 'text', text: userText }
+  ] : [{ type: 'text', text: userText }];
+
+  const resp = await fetch('/api/claude', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': key },
+    body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 2000, system: systemPrompt, messages: [{ role: 'user', content }] })
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error?.message || `API error ${resp.status}`);
+  }
+  const data = await resp.json();
+  return data.content[0].text;
+}
+
+function safeJSON(text) {
+  try { return JSON.parse(text.replace(/```json|```/g,'').trim()); }
+  catch { const m = text.match(/\{[\s\S]*\}/); if (m) return JSON.parse(m[0]); throw new Error('Could not parse response'); }
+}
+
+function buildProgressUI() {
+  document.getElementById('progressSteps').innerHTML = STEPS_CONFIG.map(s => `
+    <div class="progress-item" id="prog_${s.id}">
+      <div class="progress-dot dot-waiting" id="dot_${s.id}"></div>
+      <span class="prog-label">${s.label}</span>
+      <span class="prog-status" id="status_${s.id}"></span>
+    </div>`).join('');
+}
+
+function setStatus(id, state) {
+  const dot = document.getElementById('dot_'+id);
+  const status = document.getElementById('status_'+id);
+  if (state==='running') { dot.className='progress-dot dot-running'; dot.innerHTML='<div class="spinner"></div>'; status.textContent='Generating...'; status.className='prog-status'; }
+  else if (state==='done') { dot.className='progress-dot dot-done'; dot.innerHTML='✓'; status.textContent='Done'; status.className='prog-status done'; }
+  else if (state==='error') { dot.className='progress-dot dot-error'; dot.innerHTML='!'; status.textContent='Error'; status.className='prog-status error'; }
+}
+
+async function startGeneration() {
+  document.getElementById('step1').style.display='none';
+  document.getElementById('step2').style.display='block';
+  document.getElementById('s1').className='step done';
+  document.getElementById('s2').className='step active';
+  buildProgressUI();
+  generatedData={};
+
+  try {
+    setStatus('title','running'); generatedData.title=safeJSON(await callClaude(PROMPTS.title)); setStatus('title','done');
+    setStatus('background','running'); generatedData.background=safeJSON(await callClaude(PROMPTS.background)); setStatus('background','done');
+    setStatus('methods','running'); generatedData.methods=safeJSON(await callClaude(PROMPTS.methods)); setStatus('methods','done');
+    setStatus('results','running'); generatedData.results=safeJSON(await callClaude(PROMPTS.results)); setStatus('results','done');
+    setStatus('takeaway','running'); generatedData.takeaway=safeJSON(await callClaude(PROMPTS.takeaway)); setStatus('takeaway','done');
+    setStatus('caption','running'); generatedData.caption=await callClaude(PROMPTS.caption,true,'Write the Instagram caption for this paper.'); setStatus('caption','done');
+    setStatus('abbrev','running');
+    const abbrevPrompt=`Review this slide content and list every abbreviation used. Return ONLY valid JSON: {"abbreviations":[{"abbrev":"TKA","full":"Total Knee Arthroplasty"}]}. Content: ${JSON.stringify(generatedData)}`;
+    generatedData.abbrev=safeJSON(await callClaude(abbrevPrompt,false)); setStatus('abbrev','done');
+    showResults();
+  } catch(e) {
+    const errEl=document.getElementById('errorBox2');
+    errEl.style.display='block';
+    errEl.textContent='Error: '+e.message;
+    STEPS_CONFIG.forEach(s=>{ const d=document.getElementById('dot_'+s.id); if(d&&(d.className.includes('waiting')||d.className.includes('running'))) setStatus(s.id,'error'); });
+  }
+}
+
+function pyTitle(d){return`# TITLE SLIDE\nimport matplotlib.pyplot as plt\nimport matplotlib.patches as patches\nimport textwrap\n\nMAIN_TITLE=${JSON.stringify(d.MAIN_TITLE)}\nSUBTITLE=${JSON.stringify(d.SUBTITLE)}\nJOURNAL=${JSON.stringify(d.JOURNAL)}\nYEAR=${JSON.stringify(d.YEAR)}\nOUTPUT_FILE="OrthoMinute_TitleSlide.png"\n\nBLUE="#1E90FF";WHITE="#FFFFFF";GRAY="#888888";DARK="#444444";DIM="#222222";BLACK="#000000";FONT="Liberation Sans"\nfig,ax=plt.subplots(figsize=(10.8,10.8),dpi=100)\nfig.patch.set_facecolor(BLACK);ax.set_facecolor(BLACK)\nax.set_xlim(0,1080);ax.set_ylim(0,1080);ax.invert_yaxis();ax.axis("off")\nax.add_patch(patches.Rectangle((72,90),52,5,color=BLUE))\nax.text(138,96,"THE ORTHO MINUTE",color=BLUE,fontsize=14,fontweight="bold",va="center",ha="left",fontfamily=FONT)\nax.text(72,210,"NEW RESEARCH",color=BLUE,fontsize=13,fontweight="bold",va="top",ha="left",fontfamily=FONT)\nwrapped=textwrap.fill(MAIN_TITLE,width=28)\nax.text(72,270,wrapped,color=WHITE,fontsize=46,fontweight="bold",va="top",ha="left",fontfamily=FONT,linespacing=1.25,multialignment="left")\nwrapped_sub=textwrap.fill(SUBTITLE,width=52)\nax.text(72,760,wrapped_sub,color=GRAY,fontsize=22,va="top",ha="left",fontfamily=FONT,linespacing=1.4,multialignment="left")\nax.plot([72,1008],[900,900],color=DIM,linewidth=1.5)\nax.text(72,918,"JOURNAL",color=DARK,fontsize=12,fontweight="bold",va="top",ha="left",fontfamily=FONT)\nax.text(72,944,JOURNAL,color=WHITE,fontsize=18,fontweight="bold",va="top",ha="left",fontfamily=FONT)\nax.text(1008,918,"YEAR",color=DARK,fontsize=12,fontweight="bold",va="top",ha="right",fontfamily=FONT)\nax.text(1008,944,YEAR,color=BLUE,fontsize=18,fontweight="bold",va="top",ha="right",fontfamily=FONT)\nplt.subplots_adjust(left=0,right=1,top=1,bottom=0)\nplt.savefig(OUTPUT_FILE,dpi=100,bbox_inches=None,facecolor=BLACK,edgecolor="none")\nplt.close()\nprint("Saved:",OUTPUT_FILE)`;}
+
+function pyBackground(d){return`# BACKGROUND SLIDE\nimport matplotlib.pyplot as plt\nimport matplotlib.patches as patches\nimport textwrap\n\nBULLET_1=${JSON.stringify(d.BULLET_1)}\nBULLET_2=${JSON.stringify(d.BULLET_2)}\nJOURNAL=${JSON.stringify(d.JOURNAL)}\nYEAR=${JSON.stringify(d.YEAR)}\nOUTPUT_FILE="OrthoMinute_BackgroundSlide.png"\n\nBLUE="#1E90FF";WHITE="#FFFFFF";GRAY="#888888";DARK="#444444";DIM="#222222";BLACK="#000000";FONT="Liberation Sans"\nfig,ax=plt.subplots(figsize=(10.8,10.8),dpi=100)\nfig.patch.set_facecolor(BLACK);ax.set_facecolor(BLACK)\nax.set_xlim(0,1080);ax.set_ylim(0,1080);ax.invert_yaxis();ax.axis("off")\nax.add_patch(patches.Rectangle((72,90),52,5,color=BLUE))\nax.text(138,96,"THE ORTHO MINUTE",color=BLUE,fontsize=14,fontweight="bold",va="center",ha="left",fontfamily=FONT)\nax.text(72,210,"BACKGROUND",color=BLUE,fontsize=13,fontweight="bold",va="top",ha="left",fontfamily=FONT)\nax.add_patch(patches.Circle((72,380),10,color=BLUE))\nwrapped1=textwrap.fill(BULLET_1,width=30)\nax.text(105,355,wrapped1,color=WHITE,fontsize=52,fontweight="bold",va="top",ha="left",fontfamily=FONT,linespacing=1.2,multialignment="left")\nax.add_patch(patches.Circle((72,620),10,color=BLUE))\nwrapped2=textwrap.fill(BULLET_2,width=30)\nax.text(105,595,wrapped2,color=WHITE,fontsize=52,fontweight="bold",va="top",ha="left",fontfamily=FONT,linespacing=1.2,multialignment="left")\nax.plot([72,1008],[900,900],color=DIM,linewidth=1.5)\nax.text(72,918,"JOURNAL",color=DARK,fontsize=12,fontweight="bold",va="top",ha="left",fontfamily=FONT)\nax.text(72,944,JOURNAL,color=WHITE,fontsize=18,fontweight="bold",va="top",ha="left",fontfamily=FONT)\nax.text(1008,918,"YEAR",color=DARK,fontsize=12,fontweight="bold",va="top",ha="right",fontfamily=FONT)\nax.text(1008,944,YEAR,color=BLUE,fontsize=18,fontweight="bold",va="top",ha="right",fontfamily=FONT)\nplt.subplots_adjust(left=0,right=1,top=1,bottom=0)\nplt.savefig(OUTPUT_FILE,dpi=100,bbox_inches=None,facecolor=BLACK,edgecolor="none")\nplt.close()\nprint("Saved:",OUTPUT_FILE)`;}
+
+function pyMethods(d){return`# METHODS SLIDE\nimport matplotlib.pyplot as plt\nimport matplotlib.patches as patches\n\nDESIGN=${JSON.stringify(d.DESIGN)}\nN=${JSON.stringify(d.N)}\nPOPULATION=${JSON.stringify(d.POPULATION)}\nOUTCOME=${JSON.stringify(d.OUTCOME)}\nJOURNAL=${JSON.stringify(d.JOURNAL)}\nYEAR=${JSON.stringify(d.YEAR)}\nOUTPUT_FILE="OrthoMinute_MethodsSlide.png"\n\nBLUE="#1E90FF";WHITE="#FFFFFF";DARK="#444444";DIM="#222222";BLACK="#000000";FONT="Liberation Sans"\nrows=[("Design",DESIGN),("N",N),("Population",POPULATION),("Outcome",OUTCOME)]\nfig,ax=plt.subplots(figsize=(10.8,10.8),dpi=100)\nfig.patch.set_facecolor(BLACK);ax.set_facecolor(BLACK)\nax.set_xlim(0,1080);ax.set_ylim(0,1080);ax.invert_yaxis();ax.axis("off")\nax.add_patch(patches.Rectangle((72,90),52,5,color=BLUE))\nax.text(138,96,"THE ORTHO MINUTE",color=BLUE,fontsize=14,fontweight="bold",va="center",ha="left",fontfamily=FONT)\nax.text(72,175,"METHODS",color=BLUE,fontsize=13,fontweight="bold",va="top",ha="left",fontfamily=FONT)\ny_positions=[240,390,540,690]\nfor (label,value),y in zip(rows,y_positions):\n    ax.text(72,y,label.upper(),color=BLUE,fontsize=18,fontweight="bold",va="top",ha="left",fontfamily=FONT)\n    ax.text(72,y+36,value,color=WHITE,fontsize=34,fontweight="bold",va="top",ha="left",fontfamily=FONT,linespacing=1.2)\nax.plot([72,1008],[900,900],color=DIM,linewidth=1.5)\nax.text(72,918,"JOURNAL",color=DARK,fontsize=12,fontweight="bold",va="top",ha="left",fontfamily=FONT)\nax.text(72,944,JOURNAL,color=WHITE,fontsize=18,fontweight="bold",va="top",ha="left",fontfamily=FONT)\nax.text(1008,918,"YEAR",color=DARK,fontsize=12,fontweight="bold",va="top",ha="right",fontfamily=FONT)\nax.text(1008,944,YEAR,color=BLUE,fontsize=18,fontweight="bold",va="top",ha="right",fontfamily=FONT)\nplt.subplots_adjust(left=0,right=1,top=1,bottom=0)\nplt.savefig(OUTPUT_FILE,dpi=100,bbox_inches=None,facecolor=BLACK,edgecolor="none")\nplt.close()\nprint("Saved:",OUTPUT_FILE)`;}
+
+function pyResult(f,idx,journal,year){return`# RESULTS SLIDE ${idx+1}\nimport matplotlib.pyplot as plt\nimport matplotlib.patches as patches\nimport numpy as np\n\nFINDING=${JSON.stringify(f.FINDING)}\nBAR_LABEL_LEFT=${JSON.stringify(f.BAR_LABEL_LEFT)}\nBAR_LABEL_RIGHT=${JSON.stringify(f.BAR_LABEL_RIGHT)}\nVALUE_LEFT=${f.VALUE_LEFT}\nVALUE_RIGHT=${f.VALUE_RIGHT}\nY_LABEL=${JSON.stringify(f.Y_LABEL)}\nP_VALUE=${JSON.stringify(f.P_VALUE)}\nJOURNAL=${JSON.stringify(journal)}\nYEAR=${JSON.stringify(year)}\nOUTPUT_FILE="OrthoMinute_ResultsSlide${idx+1}.png"\n\nBLUE="#1E90FF";ORANGE="#FF6B1A";WHITE="#FFFFFF";GRAY="#888888";DARK="#444444";DIM="#222222";BLACK="#000000";FONT="Liberation Sans"\nfig,ax=plt.subplots(figsize=(10.8,10.8),dpi=100)\nfig.patch.set_facecolor(BLACK);ax.set_facecolor(BLACK)\nbar_ax=fig.add_axes([0,0,1,1]);bar_ax.set_xlim(0,1080);bar_ax.set_ylim(0,1080);bar_ax.invert_yaxis();bar_ax.axis("off")\nbar_ax.add_patch(patches.Rectangle((72,90),52,5,color=BLUE))\nbar_ax.text(138,96,"THE ORTHO MINUTE",color=BLUE,fontsize=14,fontweight="bold",va="center",ha="left",fontfamily=FONT)\nbar_ax.text(72,175,"RESULTS",color=BLUE,fontsize=13,fontweight="bold",va="top",ha="left",fontfamily=FONT)\nbar_ax.text(540,218,FINDING,color=WHITE,fontsize=19,fontweight="bold",va="top",ha="center",fontfamily=FONT,linespacing=1.3,multialignment="center")\nchart_ax=fig.add_axes([0.1,0.28,0.8,0.48]);chart_ax.set_facecolor(BLACK)\nfor sp in ['top','right']:chart_ax.spines[sp].set_visible(False)\nchart_ax.spines['bottom'].set_color(DIM);chart_ax.spines['left'].set_color(DIM)\nx=np.array([0,1]);vals=[VALUE_LEFT,VALUE_RIGHT]\nbars=chart_ax.bar(x,vals,width=0.5,color=[ORANGE,BLUE],zorder=3)\nfor bar,val in zip(bars,vals):\n    chart_ax.text(bar.get_x()+bar.get_width()/2,val+max(vals)*0.03,f"{val}",ha="center",va="bottom",color=WHITE,fontsize=28,fontweight="bold",fontfamily=FONT)\nchart_ax.set_xticks(x);chart_ax.set_xticklabels([BAR_LABEL_LEFT,BAR_LABEL_RIGHT],color=WHITE,fontsize=18,fontfamily=FONT)\nchart_ax.set_ylabel(Y_LABEL,color=GRAY,fontsize=14,fontfamily=FONT)\nchart_ax.set_ylim(0,max(VALUE_LEFT,VALUE_RIGHT)*1.4);chart_ax.yaxis.set_tick_params(labelcolor=GRAY)\nchart_ax.set_facecolor(BLACK);chart_ax.grid(axis='y',color=DIM,linewidth=0.5,zorder=0)\nsig_y=max(VALUE_LEFT,VALUE_RIGHT)*1.12\nchart_ax.plot([0.25,0.25,0.75,0.75],[sig_y,sig_y+max(vals)*0.03,sig_y+max(vals)*0.03,sig_y],color=GRAY,linewidth=1)\nchart_ax.text(0.5,sig_y+max(vals)*0.04,P_VALUE,ha="center",va="bottom",color=GRAY,fontsize=14,fontfamily=FONT)\nbar_ax.plot([72,1008],[900,900],color=DIM,linewidth=1.5)\nbar_ax.text(72,918,"JOURNAL",color=DARK,fontsize=12,fontweight="bold",va="top",ha="left",fontfamily=FONT)\nbar_ax.text(72,944,JOURNAL,color=WHITE,fontsize=18,fontweight="bold",va="top",ha="left",fontfamily=FONT)\nbar_ax.text(1008,918,"YEAR",color=DARK,fontsize=12,fontweight="bold",va="top",ha="right",fontfamily=FONT)\nbar_ax.text(1008,944,YEAR,color=BLUE,fontsize=18,fontweight="bold",va="top",ha="right",fontfamily=FONT)\nplt.savefig(OUTPUT_FILE,dpi=100,bbox_inches=None,facecolor=BLACK,edgecolor="none")\nplt.close()\nprint("Saved:",OUTPUT_FILE)`;}
+
+function pyTakeaway(d){return`# TAKEAWAY SLIDE\nimport matplotlib.pyplot as plt\nimport matplotlib.patches as patches\nimport textwrap\n\nLINE_1=${JSON.stringify(d.LINE_1)}\nLINE_2=${JSON.stringify(d.LINE_2)}\nJOURNAL=${JSON.stringify(d.JOURNAL)}\nYEAR=${JSON.stringify(d.YEAR)}\nOUTPUT_FILE="OrthoMinute_TakeawaySlide.png"\n\nBLUE="#1E90FF";WHITE="#FFFFFF";DARK="#444444";DIM="#222222";BLACK="#000000";FONT="Liberation Sans"\nfig,ax=plt.subplots(figsize=(10.8,10.8),dpi=100)\nfig.patch.set_facecolor(BLACK);ax.set_facecolor(BLACK)\nax.set_xlim(0,1080);ax.set_ylim(0,1080);ax.invert_yaxis();ax.axis("off")\nax.add_patch(patches.Rectangle((72,90),52,5,color=BLUE))\nax.text(138,96,"THE ORTHO MINUTE",color=BLUE,fontsize=14,fontweight="bold",va="center",ha="left",fontfamily=FONT)\nax.text(72,175,"TAKEAWAY",color=BLUE,fontsize=13,fontweight="bold",va="top",ha="left",fontfamily=FONT)\nwrapped1=textwrap.fill(LINE_1,width=26)\nax.text(72,300,wrapped1,color=WHITE,fontsize=52,fontweight="bold",va="top",ha="left",fontfamily=FONT,linespacing=1.2,multialignment="left")\nwrapped2=textwrap.fill(LINE_2,width=26)\nax.text(72,610,wrapped2,color=BLUE,fontsize=52,fontweight="bold",va="top",ha="left",fontfamily=FONT,linespacing=1.2,multialignment="left")\nax.plot([72,1008],[900,900],color=DIM,linewidth=1.5)\nax.text(72,918,"JOURNAL",color=DARK,fontsize=12,fontweight="bold",va="top",ha="left",fontfamily=FONT)\nax.text(72,944,JOURNAL,color=WHITE,fontsize=18,fontweight="bold",va="top",ha="left",fontfamily=FONT)\nax.text(1008,918,"YEAR",color=DARK,fontsize=12,fontweight="bold",va="top",ha="right",fontfamily=FONT)\nax.text(1008,944,YEAR,color=BLUE,fontsize=18,fontweight="bold",va="top",ha="right",fontfamily=FONT)\nplt.subplots_adjust(left=0,right=1,top=1,bottom=0)\nplt.savefig(OUTPUT_FILE,dpi=100,bbox_inches=None,facecolor=BLACK,edgecolor="none")\nplt.close()\nprint("Saved:",OUTPUT_FILE)`;}
+
+function showResults() {
+  document.getElementById('step2').style.display='none';
+  document.getElementById('step3').style.display='block';
+  document.getElementById('s2').className='step done';
+  document.getElementById('s3').className='step active';
+  const d=generatedData;
+  const findings=d.results?.findings||[];
+
+  const slides=[
+    {label:'Title',content:d.title?.MAIN_TITLE||''},
+    {label:'Background',content:d.background?.BULLET_1||''},
+    {label:'Methods',content:'N: '+(d.methods?.N||'')},
+    ...findings.map((f,i)=>({label:`Results ${i+1}`,content:f.FINDING})),
+    {label:'Takeaway',content:d.takeaway?.LINE_2||''},
+  ];
+
+  document.getElementById('slideGrid').innerHTML=slides.map(s=>`<div class="slide-mini"><div class="slide-mini-label">${s.label}</div><div class="slide-mini-content">${(s.content||'').substring(0,70)}</div><div class="slide-mini-footer">The Ortho Minute</div></div>`).join('');
+
+  document.getElementById('titleSection').innerHTML=`<div class="content-header"><div class="content-title">Title Slide</div></div><div class="field-row"><div class="field-box"><div class="field-label">Main Title</div><div class="field-value">${d.title?.MAIN_TITLE||''}</div></div><div class="field-box"><div class="field-label">Subtitle</div><div class="field-value">${d.title?.SUBTITLE||''}</div></div><div class="field-box"><div class="field-label">Journal</div><div class="field-value">${d.title?.JOURNAL||''}</div></div><div class="field-box"><div class="field-label">Year</div><div class="field-value">${d.title?.YEAR||''}</div></div></div>`;
+  document.getElementById('backgroundSection').innerHTML=`<div class="content-header"><div class="content-title">Background Slide</div></div><div class="field-row"><div class="field-box"><div class="field-label">Bullet 1</div><div class="field-value">${d.background?.BULLET_1||''}</div></div><div class="field-box"><div class="field-label">Bullet 2</div><div class="field-value">${d.background?.BULLET_2||''}</div></div></div>`;
+  document.getElementById('methodsSection').innerHTML=`<div class="content-header"><div class="content-title">Methods Slide</div></div><div class="field-row"><div class="field-box"><div class="field-label">Design</div><div class="field-value">${d.methods?.DESIGN||''}</div></div><div class="field-box"><div class="field-label">N</div><div class="field-value">${d.methods?.N||''}</div></div><div class="field-box"><div class="field-label">Population</div><div class="field-value">${d.methods?.POPULATION||''}</div></div><div class="field-box"><div class="field-label">Outcome</div><div class="field-value">${d.methods?.OUTCOME||''}</div></div></div>`;
+  document.getElementById('resultsSection').innerHTML=`<div class="content-header"><div class="content-title">Results Slides</div></div>${findings.map((f,i)=>`<div class="results-finding"><div class="finding-title">Results ${i+1}</div><div class="finding-text">${f.FINDING}</div><div class="finding-bars" style="margin-top:8px;"><div class="finding-bar-wrap"><div class="finding-bar-label">${f.BAR_LABEL_LEFT}</div><div class="finding-bar-val orange">${f.VALUE_LEFT}</div></div><div style="font-size:18px;color:#333;align-self:center;">vs</div><div class="finding-bar-wrap"><div class="finding-bar-label">${f.BAR_LABEL_RIGHT}</div><div class="finding-bar-val blue">${f.VALUE_RIGHT}</div></div><div class="finding-pval">${f.P_VALUE}</div></div><div style="font-size:11px;color:#444;margin-top:6px;">${f.Y_LABEL}</div></div>`).join('')}`;
+  document.getElementById('takeawaySection').innerHTML=`<div class="content-header"><div class="content-title">Takeaway Slide</div></div><div class="field-row"><div class="field-box"><div class="field-label">Line 1 (white)</div><div class="field-value">${d.takeaway?.LINE_1||''}</div></div><div class="field-box"><div class="field-label">Line 2 (blue)</div><div class="field-value" style="color:#1E90FF;">${d.takeaway?.LINE_2||''}</div></div></div>`;
+  document.getElementById('captionText').textContent=d.caption||'';
+
+  allScripts=[];
+  allScripts.push({label:'Title Slide',code:pyTitle(d.title)});
+  allScripts.push({label:'Background Slide',code:pyBackground(d.background)});
+  allScripts.push({label:'Methods Slide',code:pyMethods(d.methods)});
+  findings.forEach((f,i)=>allScripts.push({label:`Results Slide ${i+1}`,code:pyResult(f,i,d.results.JOURNAL||d.title?.JOURNAL||'',d.results.YEAR||d.title?.YEAR||'')}));
+  allScripts.push({label:'Takeaway Slide',code:pyTakeaway(d.takeaway)});
+
+  document.getElementById('pythonScripts').innerHTML=allScripts.map((s,i)=>`<div class="python-section"><div class="python-header" onclick="togglePy(${i})"><span class="python-name">${s.label}</span><div class="python-actions"><button class="btn-copy" onclick="event.stopPropagation();copyScript(${i})">Copy</button><span id="pyicon_${i}">▼</span></div></div><div class="python-code" id="pycode_${i}"><pre>${s.code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre></div></div>`).join('');
+
+  const abbrevs=d.abbrev?.abbreviations||[];
+  document.getElementById('abbrevGrid').innerHTML=abbrevs.map(a=>`<div class="abbrev-item"><div class="abbrev-key">${a.abbrev}</div><div class="abbrev-val">${a.full}</div></div>`).join('')||'<div style="font-size:13px;color:#555;">None detected</div>';
+}
+
+function togglePy(i){document.getElementById('pycode_'+i).classList.toggle('open');}
+function copyScript(i){navigator.clipboard.writeText(allScripts[i].code).catch(()=>{});}
+function copyAll(){
+  const all=allScripts.map(s=>s.code).join('\n\n'+'#'.repeat(60)+'\n\n');
+  navigator.clipboard.writeText(all).then(()=>{const fb=document.getElementById('allFeedback');fb.classList.add('show');setTimeout(()=>fb.classList.remove('show'),2000);}).catch(()=>{});
+}
+function copyCaption(){
+  navigator.clipboard.writeText(generatedData.caption||'').then(()=>{const fb=document.getElementById('captionFeedback');fb.classList.add('show');setTimeout(()=>fb.classList.remove('show'),2000);}).catch(()=>{});
+}
+function resetApp(){
+  paperBase64='';generatedData={};allScripts=[];
+  document.getElementById('step1').style.display='block';
+  document.getElementById('step2').style.display='none';
+  document.getElementById('step3').style.display='none';
+  document.getElementById('uploadLabel').textContent='Click to upload journal article PDF';
+  document.getElementById('uploadSub').textContent='Supports any orthopaedic journal PDF';
+  document.getElementById('uploadZone').classList.remove('has-file');
+  document.getElementById('apiKey').value='';
+  document.getElementById('generateBtn').disabled=true;
+  document.getElementById('errorBox').style.display='none';
+  document.getElementById('s1').className='step active';
+  document.getElementById('s2').className='step';
+  document.getElementById('s3').className='step';
+}
+</script>
+</body>
+</html>
